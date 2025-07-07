@@ -25,12 +25,19 @@ struct Node {
 
     explicit Node(Node* l, Node* r)
         : left(l), right(r) {
-        update();
+        if (l && r) {
+            startRange = l->startRange;
+            endRange = r->endRange;
+            update();
+        }
     };
 
+    ~Node() {
+        delete left;
+        delete right;
+    }
+
     void update() {
-        startRange = left->startRange;
-        endRange = right->endRange;
 
         sum = left->sum + right->sum;
         min_val = std::min(left->min_val, right->min_val);

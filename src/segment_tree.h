@@ -129,9 +129,17 @@ class SegmentTree {
                         _query_min(node->right, query_left, query_right, mid + 1, curr_right));
     }
 
+    // función recursiva para obtener la altura del árbol (se usará para el gráfico)
+    int _getDepth(TNode* node) {
+        if (!node) {
+            return 0;
+        }
+        return 1 + std::max(_getDepth(node->left), _getDepth(node->right));
+    }
+
     // función recursiva para dibujar cada nodo y sus conexiones usando raylib
-    void _drawNode(TNode* node, int x, int y, int h_spacing, int level) {
-        if (!node) return;
+    void _drawNode(TNode* node, int x, int y, int h_spacing, int current_level, int max_draw_level) {
+        if (!node || current_level > max_draw_level) return;
 
         // Dibuja el texto del nodo
         std::string range_text = "[" + std::to_string(node->startRange) + "," + std::to_string(node->endRange) + "]";
@@ -149,11 +157,11 @@ class SegmentTree {
         // Dibuja líneas y nodos hijos
         if (node->left) {
             DrawLine(x, y + 80, x - h_spacing, next_y, GRAY);
-            _drawNode(node->left, x - h_spacing, next_y, h_spacing / 2, level + 1);
+            _drawNode(node->left, x - h_spacing, next_y, h_spacing / 2, current_level + 1, max_draw_level);
         }
         if (node->right) {
             DrawLine(x, y + 80, x + h_spacing, next_y, GRAY);
-            _drawNode(node->right, x + h_spacing, next_y, h_spacing / 2, level + 1);
+            _drawNode(node->right, x + h_spacing, next_y, h_spacing / 2, current_level + 1, max_draw_level);
         }
     }
 
@@ -162,17 +170,21 @@ public:
     SegmentTree() : root(nullptr), size(0) {};
 
     ~SegmentTree() {
-        deleteTree(root);
+        delete root;
     }
 
     explicit SegmentTree(TNode &n, int size) : root(n), size(size) {};
 
-    template<int SZ>
-    explicit SegmentTree(T (&arr)[SZ]) : size(SZ) {
-        root = build(arr, 0, SZ - 1);
-    };
+    explicit SegmentTree(const std::vector<T>& arr) : size(arr.size()) {
+        if (arr.empty()) {
+            root = nullptr;
+        } else {
+            // Llama a la función _build que ya tenías
+            root = build(arr, 0, size - 1);
+        }
+    }
 
-    static TNode* build(T arr[], int left, int right) {
+    static TNode* build(const std::vector<T>& arr, int left, int right) {
         if (left == right) return new TNode(arr[left], left, right); // Nodo hoja
         int mid = (left + right) / 2; // Divide el array recursivamente
         TNode* left_child = build(arr, left, mid);
@@ -219,9 +231,13 @@ public:
         return _query_min(root, left, right, 0, size - 1);
     }
 
-    void draw() {
+    int getDepth() {
+        return _getDepth(root);
+    }
+
+    void draw(int max_draw_level) {
         if (root) {
-            _drawNode(root, GetScreenWidth() / 2, 50, 200, 0);
+            _drawNode(root, GetScreenWidth() / 2, 80, GetScreenWidth() / 4, 0, max_draw_level);
         }
     }
 };

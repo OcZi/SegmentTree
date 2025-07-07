@@ -37,8 +37,10 @@ add_executable(segment_tree main.cpp
         src/node.cpp
         src/node.h)
 
-# set the include directory
-target_include_directories(segment_tree PRIVATE ${raylib_INCLUDE_DIRS})
+# Apuntamos a la carpeta 'src' principal, donde están tanto raylib.h como raygui.h
+target_include_directories(segment_tree PRIVATE
+        ${raylib_SOURCE_DIR}/src
+)
 
-# link all libraries to the project
-target_link_libraries(segment_tree PRIVATE ${LIB1})
+# Vinculamos la librería raylib a nuestro proyecto
+target_link_libraries(segment_tree PRIVATE raylib)
