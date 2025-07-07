@@ -179,7 +179,6 @@ public:
         if (arr.empty()) {
             root = nullptr;
         } else {
-            // Llama a la función _build que ya tenías
             root = build(arr, 0, size - 1);
         }
     }
@@ -190,6 +189,19 @@ public:
         TNode* left_child = build(arr, left, mid);
         TNode* right_child = build(arr, mid+1, right);
         return new TNode(left_child, right_child); // Nodo interno
+    }
+
+    //usaremos esta funcion para la visualizacion
+    void rebuild(const std::vector<T>& arr) {
+        //borra el árbol antiguo para liberar la memoria
+        delete root;
+        root = nullptr;
+
+        //reconstruye el árbol con los nuevos datos
+        size = arr.size();
+        if (!arr.empty()) {
+            root = build(arr, 0, size - 1);
+        }
     }
 
     [[nodiscard]] bool is_empty() const {

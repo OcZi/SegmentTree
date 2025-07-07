@@ -18,7 +18,6 @@ struct Node {
     int startRange;
     int endRange;
 
-
     explicit Node(T value, int l, int r)
         : sum(value), min_val(value), max_val(value),
           left(nullptr), right(nullptr), startRange(l), endRange(r) {};

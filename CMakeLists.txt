@@ -3,8 +3,6 @@ project(segment_tree)
 
 set(CMAKE_CXX_STANDARD 20)
 
-
-
 # Include the command that downloads libraries
 include(FetchContent)
 
@@ -35,7 +33,9 @@ add_executable(segment_tree main.cpp
         src/segment_tree.cpp
         src/segment_tree.h
         src/node.cpp
-        src/node.h)
+        src/node.h
+        src/visualizer.h
+        src/visualizer.cpp)
 
 # Apuntamos a la carpeta 'src' principal, donde están tanto raylib.h como raygui.h
 target_include_directories(segment_tree PRIVATE
