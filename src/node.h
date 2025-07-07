@@ -14,17 +14,30 @@ struct Node {
     Node* right;
     T min_val, max_val; // añadir valores min y max para queries;
 
+    //estos atributos sirven para visualizar el rango de cada nodo
+    int startRange;
+    int endRange;
 
-    explicit Node(T value)
+    explicit Node(T value, int l, int r)
         : sum(value), min_val(value), max_val(value),
-          left(nullptr), right(nullptr) {};
+          left(nullptr), right(nullptr), startRange(l), endRange(r) {};
 
     explicit Node(Node* l, Node* r)
         : left(l), right(r) {
-        update();
+        if (l && r) {
+            startRange = l->startRange;
+            endRange = r->endRange;
+            update();
+        }
     };
 
+    ~Node() {
+        delete left;
+        delete right;
+    }
+
     void update() {
+
         sum = left->sum + right->sum;
         min_val = std::min(left->min_val, right->min_val);
         max_val = std::max(left->max_val, right->max_val);
