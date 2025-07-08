@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.30)
 project(segment_tree)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Include the command that downloads libraries
 include(FetchContent)
@@ -14,6 +15,7 @@ function(include_dependency libName gitURL gitTag)
             GIT_TAG        ${gitTag}
             GIT_SHALLOW    TRUE
             GIT_PROGRESS   TRUE
+            OVERRIDE_FIND_PACKAGE
     )
 
     FetchContent_MakeAvailable(${libName})
@@ -39,7 +41,12 @@ add_executable(segment_tree main.cpp
 
 # Apuntamos a la carpeta 'src' principal, donde están tanto raylib.h como raygui.h
 target_include_directories(segment_tree PRIVATE
-        ${raylib_SOURCE_DIR}/src
+    ${raylib_SOURCE_DIR}/src
+    ${raylib_BINARY_DIR}/src  # Necesario para algunos archivos generados
+)
+
+target_include_directories(segment_tree SYSTEM PRIVATE
+    ${raylib_SOURCE_DIR}/src
 )
 
 # Vinculamos la librería raylib a nuestro proyecto
