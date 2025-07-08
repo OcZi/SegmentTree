@@ -280,7 +280,7 @@ public:
             throw std::invalid_argument("Invalid query range");
         }
         if (is_empty()) {
-            return std::nullopt; // Use std::nullopt for empty optional
+            return std::nullopt; // nullpot-> empty optional
         }
         return _query_max(root, left, right, 0, size - 1);
     }
@@ -291,7 +291,7 @@ public:
             throw std::invalid_argument("Invalid query range");
         }
         if (is_empty()) {
-            return std::nullopt; // Use std::nullopt for empty optional
+            return std::nullopt; // nullpot-> empty optional
         }
         return _query_min(root, left, right, 0, size - 1);
     }
