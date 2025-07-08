@@ -24,6 +24,12 @@ std::vector<int> parseInput(const std::string& text) {
     return numbers;
 }
 
+void Visualizer::rebuildTree(const std::vector<int>& newData) {
+    tree.rebuild(newData);  // usamos el método rebuild del SegmentTree -> construir a partir de un vector!
+    treeDepth = tree.getDepth();
+    maxDrawLevel = 0;
+    animationTimer = 0.0f;
+}
 
 
 Visualizer::Visualizer(int width, int height, const char* title)
@@ -39,13 +45,10 @@ Visualizer::Visualizer(int width, int height, const char* title)
     animationTimer = 0.0f;
     maxDrawLevel = 0;
 
-    std::vector<int> data = parseInput(inputText);
-    tree = new SegmentTree<int>(data);
-    treeDepth = tree->getDepth();
+    treeDepth = tree.getDepth();
 }
 
 Visualizer::~Visualizer() {
-    delete tree;
     CloseWindow();
 }
 
@@ -88,10 +91,7 @@ void Visualizer::Update() {
         if (IsKeyPressed(KEY_ENTER)) {
             std::vector<int> newData = parseInput(inputText);
             if (!newData.empty()) {
-                tree->rebuild(newData);
-                treeDepth = tree->getDepth();
-                maxDrawLevel = 0;
-                animationTimer = 0.0f;
+                rebuildTree(newData);  
                 textBoxEditMode = false;
             }
         }
@@ -113,7 +113,7 @@ void Visualizer::Draw() {
     ClearBackground(RAYWHITE);
 
     // Dibuja el árbol
-    tree->draw(maxDrawLevel);
+    tree.draw(maxDrawLevel);
 
     // Dibuja la caja de texto
     DrawRectangleRec(textBox, LIGHTGRAY);

@@ -55,7 +55,7 @@ void run_test() {
 }
 
 int main() {
-    run_test(); // Opcional: ejecutar pruebas de consola
+    // run_test(); // Opcional: ejecutar pruebas de consola
 
     Visualizer app(1600, 900, "Visualizador de Segment Tree");
     app.Run();

@@ -1,7 +1,3 @@
-//
-// Created by dalev on 7/07/2025.
-//
-
 #ifndef VISUALIZER_H
 #define VISUALIZER_H
 
@@ -19,7 +15,7 @@ private:
     int screenWidth;
     int screenHeight;
 
-    SegmentTree<int> *tree;
+    SegmentTree<int> tree; // no hacer el objeto innecesariamente un puntero a un tree, doble manejo innc 
     int treeDepth;
 
     std::string inputText;
@@ -30,6 +26,7 @@ private:
 
     void Update();
     void Draw();
+    void rebuildTree(const std::vector<int>& newData); // nuevo método: construir el árbol con nuevos datos sin tener el cuenta el default
 };
 
 #endif //VISUALIZER_H
