@@ -1,2 +1,7 @@
 .idea/
 cmake-build-debug/
+.cache/
+.clangd
+compile_commands.json
+flake.lock
+build/
