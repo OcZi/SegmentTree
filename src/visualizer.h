@@ -14,6 +14,7 @@ public:
 private:
     int screenWidth;
     int screenHeight;
+    const char* appTitle;
 
     SegmentTree<int> tree; // no hacer el objeto innecesariamente un puntero a un tree, doble manejo innc 
     int treeDepth;

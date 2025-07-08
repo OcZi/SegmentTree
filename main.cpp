@@ -1,4 +1,3 @@
-#include "raylib.h"
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -57,7 +56,7 @@ void run_test() {
 int main() {
     // run_test(); // Opcional: ejecutar pruebas de consola
 
-    Visualizer app(1600, 900, "Visualizador de Segment Tree");
+    Visualizer app(1600, 900, " Segment Tree Visualizer");
     app.Run();
 
     return 0;

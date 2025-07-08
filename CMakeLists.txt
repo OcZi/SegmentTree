@@ -37,7 +37,9 @@ add_executable(segment_tree main.cpp
         src/node.cpp
         src/node.h
         src/visualizer.h
-        src/visualizer.cpp)
+        src/visualizer.cpp
+        src/screens.h
+        src/screen_logo.cpp)
 
 # Apuntamos a la carpeta 'src' principal, donde están tanto raylib.h como raygui.h
 target_include_directories(segment_tree PRIVATE

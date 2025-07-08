@@ -6,6 +6,11 @@
 
 #include "visualizer.h"
 #include <sstream>
+#include "screens.h"
+
+GameScreen currentScreen = LOGO;
+
+static std::string DEFAULT_TEXT_BOX = "3 1 4 2 8 5 7 6";
 
 // Función auxiliar para convertir el string de entrada en un vector de números
 std::vector<int> parseInput(const std::string& text) {
@@ -33,13 +38,10 @@ void Visualizer::rebuildTree(const std::vector<int>& newData) {
 
 
 Visualizer::Visualizer(int width, int height, const char* title)
-    : screenWidth(width), screenHeight(height)
+    : screenWidth(width), screenHeight(height), appTitle(title)
 {
-    InitWindow(width, height, title);
-    SetTargetFPS(60);
-
     // Inicializamos el estado
-    inputText = "3 1 4 2 8 5 7 6";
+    inputText = DEFAULT_TEXT_BOX;
     textBox = { width / 2.0f - 200, 20, 400, 40 };
     textBoxEditMode = false;
     animationTimer = 0.0f;
@@ -53,6 +55,12 @@ Visualizer::~Visualizer() {
 }
 
 void Visualizer::Run() {
+    currentScreen = LOGO;
+    InitWindow(screenWidth, screenHeight, appTitle);
+
+    InitLogoScreen();
+    SetTargetFPS(60);
+
     while (!WindowShouldClose()) {
         Update();
         Draw();
@@ -60,14 +68,17 @@ void Visualizer::Run() {
 }
 
 void Visualizer::Update() {
-    const float ANIMATION_SPEED = 0.5f;
+    if (currentScreen == LOGO)
+    {
+        UpdateLogoScreen();
+        if (FinishLogoScreen()) currentScreen = VISUALIZER;
+        return;
+    }
+
+    constexpr float ANIMATION_SPEED = 0.5f;
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        if (CheckCollisionPointRec(GetMousePosition(), textBox)) {
-            textBoxEditMode = true;
-        } else {
-            textBoxEditMode = false;
-        }
+        textBoxEditMode = CheckCollisionPointRec(GetMousePosition(), textBox);
     }
 
     if (textBoxEditMode) {
@@ -108,35 +119,45 @@ void Visualizer::Update() {
     }
 }
 
+void _Draw()
+{
+
+}
+
 void Visualizer::Draw() {
     BeginDrawing();
+
     ClearBackground(RAYWHITE);
-
-    // Dibuja el árbol
-    tree.draw(maxDrawLevel);
-
-    // Dibuja la caja de texto
-    DrawRectangleRec(textBox, LIGHTGRAY);
-    if (textBoxEditMode) {
-        DrawRectangleLines((int)textBox.x, (int)textBox.y, (int)textBox.width, (int)textBox.height, RED);
-    } else {
-        DrawRectangleLines((int)textBox.x, (int)textBox.y, (int)textBox.width, (int)textBox.height, DARKGRAY);
+    if (currentScreen == LOGO)
+    {
+        DrawLogoScreen();
     }
-    DrawText(inputText.c_str(), (int)textBox.x + 10, (int)textBox.y + 10, 20, MAROON);
+    if (currentScreen == VISUALIZER)
+    {
+        // Dibuja el árbol
+        tree.draw(maxDrawLevel);
 
-    // Dibuja el cursor parpadeante
-    if (textBoxEditMode) {
-        if (((int)(GetTime() * 2)) % 2 == 0) {
-            int textWidth = MeasureText(inputText.c_str(), 20);
-            DrawText("_", (int)textBox.x + 10 + textWidth, (int)textBox.y + 12, 20, MAROON);
+        // Dibuja la caja de texto
+        DrawRectangleRec(textBox, LIGHTGRAY);
+        if (textBoxEditMode) {
+            DrawRectangleLines((int)textBox.x, (int)textBox.y, (int)textBox.width, (int)textBox.height, RED);
+        } else {
+            DrawRectangleLines((int)textBox.x, (int)textBox.y, (int)textBox.width, (int)textBox.height, DARKGRAY);
         }
-    }
+        DrawText(inputText.c_str(), (int)textBox.x + 10, (int)textBox.y + 10, 20, MAROON);
 
-    // Muestra información adicional
-    DrawText("Segment Tree Visualizer", 10, 10, 20, DARKGRAY);
-    DrawText("Haz clic en la caja, edita los números y presiona ENTER", screenWidth / 2 - 250, 70, 10, GRAY);
+        // Dibuja el cursor parpadeante
+        if (textBoxEditMode) {
+            if (((int)(GetTime() * 2)) % 2 == 0) {
+                int textWidth = MeasureText(inputText.c_str(), 20);
+                DrawText("_", (int)textBox.x + 10 + textWidth, (int)textBox.y + 12, 20, MAROON);
+            }
+        }
+
+        // Muestra información adicional
+        DrawText(appTitle, 10, 10, 20, DARKGRAY);
+        DrawText("Haz clic en la caja, edita los números y presiona ENTER", screenWidth / 2 - 250, 70, 10, GRAY);
+    }
 
     EndDrawing();
 }
-
-
