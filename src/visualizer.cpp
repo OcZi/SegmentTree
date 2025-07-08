@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-#include "Visualizer.h"
+#include "visualizer.h"
 #include <sstream>
 
 // Función auxiliar para convertir el string de entrada en un vector de números
@@ -23,6 +23,8 @@ std::vector<int> parseInput(const std::string& text) {
     }
     return numbers;
 }
+
+
 
 Visualizer::Visualizer(int width, int height, const char* title)
     : screenWidth(width), screenHeight(height)
