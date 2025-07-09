@@ -105,9 +105,11 @@ struct Node {
     ~Node() {}
 
     void update() {
+        if (!left && !right) return; // Hoja: ya tiene sum, min, max asignados
+
         sum = 0;
-        min = std::numeric_limits<T>::max(); 
-        max = std::numeric_limits<T>::min(); 
+        min = std::numeric_limits<T>::max();
+        max = std::numeric_limits<T>::min();
 
         if (left) {
             sum += left->sum;

@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <optional>
 #include <cmath>
+#include <iostream>
 #include <stdexcept>
+#include <unordered_set>
 #include <vector>
 
 #include "raylib.h"
@@ -36,12 +38,15 @@ class SegmentTree {
      */
     T _query_sum(TNode *current,
              int query_left, int query_right,
-             int curr_left, int curr_right) {
+             int curr_left, int curr_right,
+             std::unordered_set<TNode*> &visited) {
 
         // Caso 1: No hay interseccion
         if (query_left > query_right || curr_left > curr_right || query_left > curr_right || query_right < curr_left) {
             return 0; 
         }
+
+        visited.insert(current);
 
         // Caso 2: Interseccion total
         if (query_left <= curr_left && query_right >= curr_right) {
@@ -50,36 +55,33 @@ class SegmentTree {
 
         // Caso 3: Interseccion total
         int mid = (curr_left + curr_right) / 2;
-        return _query_sum(current->left, query_left, std::min(query_right, mid), curr_left, mid) +
-               _query_sum(current->right, std::max(query_left, mid+1), query_right, mid+1, curr_right);
+        return _query_sum(current->left, query_left, std::min(query_right, mid), curr_left, mid, visited) +
+               _query_sum(current->right, std::max(query_left, mid+1), query_right, mid+1, curr_right, visited);
     }
 
     /**
      * funcion helper para actualizar un valor de forma recursiva
      * @param node curr nide
-     * @param left curr node left bound
-     * @param right curr node right bound
      * @param index indef to update
      * @param value NEW VAL
      */
-    void _update(TNode* node, int left, int right, int index, const T &value) {
-        if (left == right) { // nodo hoja
+    TNode* _update(TNode* node, int index, const T &value, std::unordered_set<TNode*> &visited) {
+        if (!node || index < node->startRange || index > node->endRange) return nullptr;
+
+        visited.insert(node);
+
+        if (node->startRange == node->endRange) { // nodo hoja
             node->sum = value;
             node->min = value;
             node->max = value;
-            return;
+            return node;
         }
 
-        // caso recursivo: encontrar el hijo que se quiere actualizar
-        int mid = (left + right) / 2;
-
-        if (index <= mid) { // en el rango izquierdo
-            _update(node->left, left, mid, index, value);
-        } else { // en el rango derecho
-            _update(node->right, mid + 1, right, index, value);
-        }
+        auto r = _update(node->left, index, value, visited);
+        if (!r) r = _update(node->right, index, value, visited);
 
         node->update(); // hacer backpropagation
+        return r;
     }
 
     /**
@@ -102,11 +104,12 @@ class SegmentTree {
      * @param curr_right curr right boundary
      * @return max value 
      */
-    T _query_max(TNode* node, int query_left, int query_right, int curr_left, int curr_right) {
+    T _query_max(TNode* node, int query_left, int query_right, int curr_left, int curr_right, std::unordered_set<TNode*> &visited) {
         // Case 1: No intersection
-        if (query_left > curr_right || query_right < curr_left) {
+        if (!node || query_left > curr_right || query_right < curr_left) {
             return std::numeric_limits<T>::min(); // Return smallest possible value
         }
+        visited.insert(node);
 
         // Case 2: Total intersection - current node's range is fully within query range
         if (query_left <= curr_left && query_right >= curr_right) {
@@ -115,8 +118,8 @@ class SegmentTree {
 
         // Case 3: Partial intersection - recurse into children
         int mid = (curr_left + curr_right) / 2;
-        return std::max(_query_max(node->left, query_left, query_right, curr_left, mid),
-                        _query_max(node->right, query_left, query_right, mid + 1, curr_right));
+        return std::max(_query_max(node->left, query_left, query_right, curr_left, mid, visited),
+                        _query_max(node->right, query_left, query_right, mid + 1, curr_right, visited));
     }
 
     /**
@@ -128,11 +131,12 @@ class SegmentTree {
      * @param curr_right curr right boundary
      * @return min value
      */
-    T _query_min(TNode* node, int query_left, int query_right, int curr_left, int curr_right) {
+    T _query_min(TNode* node, int query_left, int query_right, int curr_left, int curr_right, std::unordered_set<TNode*> &visited) {
         // Case 1: No intersection
-        if (query_left > curr_right || query_right < curr_left) {
+        if (!node || query_left > curr_right || query_right < curr_left) {
             return std::numeric_limits<T>::max(); // Return largest possible value
         }
+        visited.insert(node);
 
         // Case 2: Total intersection - current node's range is fully within query range
         if (query_left <= curr_left && query_right >= curr_right) {
@@ -141,8 +145,8 @@ class SegmentTree {
 
         // Case 3: Partial intersection - recurse into children
         int mid = (curr_left + curr_right) / 2;
-        return std::min(_query_min(node->left, query_left, query_right, curr_left, mid),
-                        _query_min(node->right, query_left, query_right, mid + 1, curr_right));
+        return std::min(_query_min(node->left, query_left, query_right, curr_left, mid, visited),
+                        _query_min(node->right, query_left, query_right, mid + 1, curr_right, visited));
     }
 
     // obtener depth recursivamente
@@ -154,33 +158,53 @@ class SegmentTree {
     }
 
 
-    // función recursiva para dibujar cada nodo y sus conexiones usando raylib
-    void _drawNode(TNode* node, int x, int y, int h_spacing, int current_level, int max_draw_level) {
+    void _drawNode(TNode* node, int x, int y, int h_spacing, int current_level, int max_draw_level, int tree_depth, int screenWidth, std::unordered_set<TNode*> &nodes) {
         if (!node || current_level > max_draw_level) return;
 
-        // Dibuja el texto del nodo
-        std::string range_text = "[" + std::to_string(node->startRange) + "," + std::to_string(node->endRange) + "]";
-        std::string sum_text = "S: " + std::to_string(node->sum);
-        std::string min_text = "m: " + std::to_string(node->min);
-        std::string max_text = "M: " + std::to_string(node->max);
+        // Calcula radio adaptativo (más pequeño a mayor profundidad)
+        int base_radius = 40;
+        int radius = std::max(20, base_radius - current_level * 4);
 
-        DrawText(range_text.c_str(), x - 25, y, 20, MAROON);
-        DrawText(sum_text.c_str(), x - 25, y + 20, 20, DARKGREEN);
-        DrawText(min_text.c_str(), x - 25, y + 40, 20, DARKBLUE);
-        DrawText(max_text.c_str(), x - 25, y + 60, 20, PURPLE);
+        // Textos
+        std::string range_text = "[" + std::to_string(node->startRange) + ":" + std::to_string(node->endRange) + "]";
+        std::string sum_text = std::to_string(node->sum);
+        std::string min_text = "[" + std::to_string(node->min) + ", " + std::to_string(node->max) + "]";
 
-        int next_y = y + 120; // Espaciado vertical
+        int fontSize = 20;
+
+        // Centra los textos horizontalmente dentro del círculo
+        int rangeWidth = MeasureText(range_text.c_str(), fontSize);
+        int sumWidth = MeasureText(sum_text.c_str(), fontSize);
+        int minWidth = MeasureText(min_text.c_str(), fontSize);
+
+        if (nodes.count(node))
+        {
+            DrawCircle(x, y + 30, radius * 1.12, RED);
+            DrawCircle(x, y + 30, radius, WHITE);
+        }
+        DrawCircleLines(x, y + 30, radius, BLACK);
+
+        DrawText(range_text.c_str(), x - rangeWidth / 2, y, fontSize, MAROON);
+        DrawText(sum_text.c_str(), x - sumWidth / 2, y + 20, fontSize, DARKGREEN);
+        DrawText(min_text.c_str(), x - minWidth / 2, y + 40, fontSize, DARKBLUE);
+
+        int next_y = y + 3 * radius; // Espaciado vertical según radio
+
+        // Ajusta espaciado horizontal dinámicamente según profundidad
+        float levelRatio = (float)(tree_depth - current_level + 1);
+        int child_spacing = screenWidth / std::pow(2, current_level + 2);
 
         // Dibuja líneas y nodos hijos
         if (node->left) {
-            DrawLine(x, y + 80, x - h_spacing, next_y, GRAY);
-            _drawNode(node->left, x - h_spacing, next_y, h_spacing / 2, current_level + 1, max_draw_level);
+            DrawLine(x, y + radius + 30, x - child_spacing, next_y, GRAY);
+            _drawNode(node->left, x - child_spacing, next_y, h_spacing / 2, current_level + 1, max_draw_level, tree_depth, screenWidth, nodes);
         }
         if (node->right) {
-            DrawLine(x, y + 80, x + h_spacing, next_y, GRAY);
-            _drawNode(node->right, x + h_spacing, next_y, h_spacing / 2, current_level + 1, max_draw_level);
+            DrawLine(x, y + radius + 30, x + child_spacing, next_y, GRAY);
+            _drawNode(node->right, x + child_spacing, next_y, h_spacing / 2, current_level + 1, max_draw_level, tree_depth, screenWidth, nodes);
         }
     }
+
     
 
 public:
@@ -253,47 +277,67 @@ public:
     }
 
     // suma [left, right]
-    T query_sum(int left, int right) {
+    T query_sum(int left, int right, std::unordered_set<TNode*> &visited) {
         if (left < 0 || right >= size || left > right) {
             throw std::invalid_argument("Invalid query range");
         }
         if (is_empty()) { 
             return 0; 
         }
-        return _query_sum(root, left, right, 0, size - 1);
+        return _query_sum(root, left, right, 0, size - 1, visited);
     }
 
+    // suma [left, right]
+    T query_sum(int left, int right) {
+        std::unordered_set<TNode*> v;
+        return query_sum(left, right, v);
+    }
 
-    void update(int index, const T &value) {
+    TNode* update(int index, const T &value) {
+        std::unordered_set<TNode*> visited;
+        return update(index, value, visited);
+    }
+
+    TNode* update(int index, const T &value, std::unordered_set<TNode*> &visited) {
         if (index < 0 || index >= size) {
-            throw std::invalid_argument("Invalid update index");
+            throw std::invalid_argument("Invalid update index, current size is " + std::to_string(size));
         }
-        if (is_empty()) { 
-             throw std::runtime_error("Cannot update an empty segment tree.");
+        if (is_empty()) {
+            throw std::runtime_error("Cannot update an empty segment tree.");
         }
-        _update(root, 0, size - 1, index, value);
+        return _update(root, index, value, visited);
     }
 
-    // max en un rang
-    std::optional<T> query_max(int left, int right) {
+    // max en un rango
+    std::optional<T> query_max(int left, int right, std::unordered_set<TNode*> &visited) {
         if (left < 0 || right >= size || left > right) {
             throw std::invalid_argument("Invalid query range");
         }
         if (is_empty()) {
             return std::nullopt; // nullpot-> empty optional
         }
-        return _query_max(root, left, right, 0, size - 1);
+        return _query_max(root, left, right, 0, size - 1, visited);
+    }
+
+    std::optional<T> query_max(int left, int right) {
+        std::unordered_set<TNode*> v;
+        return query_max(left, right, v);
     }
 
     // min en un rang
-    std::optional<T> query_min(int left, int right) {
+    std::optional<T> query_min(int left, int right, std::unordered_set<TNode*> &visited) {
         if (left < 0 || right >= size || left > right) {
             throw std::invalid_argument("Invalid query range");
         }
         if (is_empty()) {
             return std::nullopt; // nullpot-> empty optional
         }
-        return _query_min(root, left, right, 0, size - 1);
+        return _query_min(root, left, right, 0, size - 1, visited);
+    }
+
+    std::optional<T> query_min(int left, int right) {
+        std::unordered_set<TNode*> v;
+        return query_min(left, right, v);
     }
 
     // depth para el visu
@@ -301,9 +345,17 @@ public:
         return _getDepth(root);
     }
     
-    void draw(int max_draw_level) {
+    void draw(int max_draw_level, std::unordered_set<TNode*> &nodes) {
         if (root) {
-            _drawNode(root, GetScreenWidth() / 2, 80, GetScreenWidth() / 4, 0, max_draw_level);
+            // Dentro de tu método draw(...)
+            int screenWidth = GetScreenWidth();
+            int tree_depth = getDepth();  // ya lo tienes en Visualizer
+
+            int initial_x = screenWidth / 2;
+            int initial_y = 100;
+            int initial_spacing = screenWidth / 4;
+
+            _drawNode(root, initial_x, initial_y, initial_spacing, 0, max_draw_level, tree_depth, screenWidth, nodes);
         }
     }
     
