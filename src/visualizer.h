@@ -21,9 +21,19 @@ private:
 
     std::string inputText;
     Rectangle textBox;
+    Rectangle buildButton;
+    Rectangle updateButton;
+    Rectangle sumQueryButton;
+    Rectangle maxQueryButton;
+    Rectangle minQueryButton;
+
+
     bool textBoxEditMode;
     float animationTimer;
     int maxDrawLevel;
+    std::unordered_set<Node<int>*> visitedNodes;
+
+    std::pair<std::string, Color> infoText;
 
     void Update();
     void Draw();
